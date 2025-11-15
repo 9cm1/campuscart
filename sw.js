@@ -1,10 +1,18 @@
-const CACHE_NAME = 'campus-cart-v2';
+const CACHE_NAME = 'campus-cart-v3'; // 
 const urlsToCache = [
-  '/campuscart/',
-  '/campuscart/index.html',
-  '/campuscart/manifest.json',
-  '/campuscart/icons/icon-192.png',
-  '/campuscart/icons/icon-512.png'
+  '/', // ← Root path, not /campuscart/
+  '/index.html',
+  '/manifest.json',
+  '/sw.js', // ← Add this!
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/images/fc.jpg', // ← Add your actual image files
+  '/images/fp.jpg',
+  '/images/rc.jpg',
+  '/images/eez.jpg',
+  '/images/sgo.jpg',
+  '/images/ico.jpg'
+  // Add ALL your product images here
 ];
 
 // Install event - cache files
