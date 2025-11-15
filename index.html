@@ -1393,17 +1393,17 @@
         }
     </script>
 <script>
- // Register Service Worker
- if ('serviceWorker' in navigator) {
- navigator.serviceWorker.register('./sw.js')
- .then(registration => {
- console.log('SW registered successfully');
- 
- // Check for service worker update
- registration.update();
- })
- .catch(error => console.log('SW registration failed: ', error));
- }
- </script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')  // ← CHANGED: removed the dot
+  .then(registration => {
+    console.log('SW registered successfully');
+    
+    // Check for service worker update
+    registration.update();
+  })
+  .catch(error => console.log('SW registration failed: ', error));
+}
+</script>
 </body>
 </html>
