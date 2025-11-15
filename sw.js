@@ -1,4 +1,4 @@
-const CACHE_NAME = 'campus-cart-v1';
+const CACHE_NAME = 'campus-cart-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -29,13 +29,19 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  event.waitUntil(self.clients.claim());
+  self.clients.claim();
 });
 
-// Fetch event - serve from cache
+// Fetch event - FIXED: Don't cache images, always fetch fresh
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+  // If it's an image, always fetch from network
+  if (event.request.url.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+    event.respondWith(fetch(event.request));
+  } else {
+    // For other files, use cache-first
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => response || fetch(event.request))
+    );
+  }
 });
