@@ -1,8 +1,9 @@
-const CACHE_NAME = 'campus-cart-v2';
+const CACHE_NAME = 'campus-cart-netlify-v1';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/sw.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];
@@ -16,15 +17,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up ALL old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          // Delete EVERY old cache to clear GitHub Pages paths
+          return caches.delete(cacheName);
         })
       );
     })
@@ -32,16 +32,10 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch event - FIXED: Don't cache images, always fetch fresh
+// Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
-  // If it's an image, always fetch from network
-  if (event.request.url.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-    event.respondWith(fetch(event.request));
-  } else {
-    // For other files, use cache-first
-    event.respondWith(
-      caches.match(event.request)
-        .then(response => response || fetch(event.request))
-    );
-  }
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
 });
