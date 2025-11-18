@@ -1393,13 +1393,11 @@
         }
     </script>
 <script>
-// Register Service Worker
+// Unregister any existing service workers
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-  .then(registration => {
-    console.log('SW registered successfully');
-  })
-  .catch(error => console.log('SW registration failed: ', error));
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => registration.unregister());
+  });
 }
 </script>
 </body>
