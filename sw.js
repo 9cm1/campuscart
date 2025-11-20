@@ -1,64 +1,81 @@
-// sw.js - SIMPLE & RELIABLE
-const CACHE_NAME = 'campus-cart-v1';
+// sw.js - FIXED + RELIABLE
+const CACHE_NAME = 'campus-cart-v2';
 
-// Install - cache only the essential app files
+// Files cached on install
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
+];
+
+// Install
 self.addEventListener('install', event => {
   console.log('🚀 Service Worker installing...');
-  self.skipWaiting(); // Activate immediately
+  self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/icons/icon-192.png',
-        '/icons/icon-512.png'
-        // NOTE: We're NOT caching product images here
-      ]))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))
   );
 });
 
-// Activate - clean up old caches
+// Activate
 self.addEventListener('activate', event => {
   console.log('🔄 Service Worker activating...');
+
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
+    caches.keys().then(cacheNames =>
+      Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Deleting old cache:', cacheName);
+            console.log('🗑 Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
-      );
-    })
+      )
+    )
   );
-  self.clients.claim(); // Take control immediately
+
+  self.clients.claim();
 });
 
-// Fetch - SMART HANDLING
+// Fetch
 self.addEventListener('fetch', event => {
-  // FOR IMAGES: Always go directly to network (no caching)
-  if (event.request.destination === 'image') {
-    event.respondWith(fetch(event.request));
+  const request = event.request;
+
+  // ---- IMAGE HANDLING FIX ----
+  // Cache images as they load and reuse them in PWA mode
+  if (request.destination === 'image') {
+    event.respondWith(
+      caches.match(request).then(cacheRes => {
+        return (
+          cacheRes ||
+          fetch(request).then(networkRes => {
+            // Cache image for later
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, networkRes.clone());
+            });
+            return networkRes;
+          })
+        );
+      })
+    );
     return;
   }
-  
-  // FOR APP FILES: Network first, then cache
+
+  // ---- APP FILES ----
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // Cache successful responses (except images)
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, responseClone));
+    fetch(request)
+      .then(networkRes => {
+        // Cache successful GET responses
+        if (networkRes.status === 200 && request.method === 'GET') {
+          const clone = networkRes.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
         }
-        return response;
+
+        return networkRes;
       })
-      .catch(() => {
-        // Network failed - try cache
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(request)) // fallback
   );
 });
